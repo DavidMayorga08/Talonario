@@ -180,24 +180,29 @@
         </div>
       </div>
     </div>
-    <!-- <div class="">
-      <div class="info_nombre">
-        <p class="text_info_nombre">Nombre</p>
-        <p class="text_nombre">{{ }}</p>
+    <div class="cont_datos_dueño" v-if="cont_datos_dueño">
+      <div class="datos_dueño">
+        <div class="info_nombre">
+          <p class="text_info_nombre">Nombre:</p>
+          <p class="text_nombre">{{ dueño.nombre }}</p>
+        </div>
+        <div class="info_telefono">
+          <p class="text_info_telefono">Telefono:</p>
+          <p class="text_telefono">{{ dueño.telefono }}</p>
+        </div>
+        <div class="info_direccion">
+          <p class="text_info_direccion">Direccion:</p>
+          <p class="text_direccion">{{ dueño.direccion }}</p>
+        </div>
+        <div class="info_pago">
+          <p class="text_info_pago">Estado</p>
+          <p class="text_pago">{{ dueño.pago }}</p>
+        </div>
+        <div class="cont_btn_atras">
+          <button @click="atras3()">Regresar</button>
+        </div>
       </div>
-      <div class="info_telefono">
-        <p class="text_info_telefono">Telefono</p>
-        <p class="text_telefono">{{ }}</p>
-      </div>
-      <div class="info_direccion">
-        <p class="text_info_direccion">Direccion</p>
-        <p class="text_direccion">{{ }}</p>
-      </div>
-      <div class="info_pago">
-        <p class="text_info_pago">Estado</p>
-        <p class="text_pago">{{ }}</p>
-      </div>
-    </div> -->
+    </div>
   </div>
 </template>
 
@@ -232,9 +237,13 @@ const cont_options_boletas = ref(false);
 const pagarBoleta = ref(false);
 const estadoBoleta = ref('');
 const alerta = ref('');
+const cont_datos_dueño = ref(false);
+const id = ref(0);
+let i = ref(0);
 
 const boleta = ref([]);
 const boletasCompradas = ref([]);
+const dueño = ref([]);
 
 const ocultarAlerta = () => {
   setTimeout(() => {
@@ -286,11 +295,17 @@ const comprarBoleta = (index) => {
     cont_options_boletas.value = true;
     pagarBoleta.value = false;
     cuerpo.value = false;
+    i = boletasCompradas.value.findIndex((boletaComprada) => {
+      return boletaComprada.numero === boleta.value[index].item;
+    });
   }
   else if (boleta.value[index].estado === 2) {
     cont_options_boletas.value = true;
     pagarBoleta.value = true;
     cuerpo.value = false;
+    i = boletasCompradas.value.findIndex((boletaComprada) => {
+      return boletaComprada.numero === boleta.value[index].item;
+    });
   }
 };
 
@@ -310,6 +325,7 @@ const registrar = () => {
       estadoBoleta.value = "No pagada";
     }
     boletasCompradas.value.push({
+      id: id.value++,
       numero: boleta.value[boletaSeleccionada.value].item,
       nombre: nombre.value,
       telefono: telefono.value,
@@ -329,8 +345,18 @@ const registrar = () => {
 };
 
 const DatosDueño = () => {
+  cont_datos_dueño.value = true;
+  cont_options_boletas.value = false;
+  cuerpo.value = false;
 
-}
+  dueño.value = {
+    nombre: boletasCompradas.value[i].nombre,
+    telefono: boletasCompradas.value[i].telefono,
+    direccion: boletasCompradas.value[i].direccion,
+    pago: boletasCompradas.value[i].pago,
+  };
+};
+
 
 const PagarBoleta = () => {
   boleta.value[boletaSeleccionada.value].estado = 1;
@@ -356,6 +382,11 @@ const atras = () => {
 
 const atras2 = () => {
   cont_options_boletas.value = false;
+  cuerpo.value = true;
+};
+
+const atras3 = () => {
+  cont_datos_dueño.value = false;
   cuerpo.value = true;
 };
 
@@ -387,14 +418,13 @@ const listarBoletas = () => {
 };
 
 const personalizarColores = () => {
-  
 };
 
 const imprimir = () => {
   const doc = new jsPDF();
 
   doc.setFontSize(12);
-  doc.text("Resumen de boletas vendias", 10, 10);
+  doc.text("Resumen de boletas vendidas", 10, 10);
 
   const tableData = boletasCompradas.value.map((boleta, index) => [
     boleta.numero,
@@ -402,7 +432,6 @@ const imprimir = () => {
     boleta.telefono,
     boleta.direccion,
     boleta.pago,
-
   ]);
 
   doc.autoTable({
@@ -411,8 +440,10 @@ const imprimir = () => {
     startY: 20,
   });
 
-  doc.save("vendidas.pdf");
+  const totalBoletas = boletasCompradas.value.length;
+  doc.text(`Total de balotas compradas: ${totalBoletas}`, 10, doc.autoTable.previous.finalY + 10);
 
+  doc.save("vendidas.pdf");
 };
 </script>
 
@@ -852,4 +883,39 @@ input[type="text"] {
 .cont_btn_atras button:hover {
   background-color: #1aff35;
 } 
+
+.cont_datos_dueño {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 90vh;
+  width: 100%;
+}
+
+.datos_dueño {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background-color: #ccc;
+  border-radius: 10px;
+  padding: 20px;
+}
+
+.info_nombre,
+.info_telefono,
+.info_direccion,
+.info_pago {
+  margin-bottom: 15px;
+  display: flex;
+}
+
+.text_info_nombre,
+.text_info_telefono,
+.text_info_direccion,
+.text_info_pago {
+  font-size: 20px;
+  font-weight: bold;
+  margin-right: 10px;
+}
 </style>
