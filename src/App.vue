@@ -53,7 +53,8 @@
       <div class="cont_form_registro" :style="{ backgroundColor: color3 }">
         <p class="nam_div_registro">Registro de boletas</p>
         <div class="cont_identificacion">
-          <p class="text_identificacion">Numero de boleta: {{ boleta[boletaSeleccionada] ? boleta[boletaSeleccionada].item : '' }}</p>
+          <p class="text_identificacion">Numero de boleta: {{ boleta[boletaSeleccionada] ?
+    boleta[boletaSeleccionada].item : '' }}</p>
         </div>
         <div class="cont_nombre">
           <input type="text" placeholder="Nombre" v-model="nombre">
@@ -140,10 +141,12 @@
             <button :style="{ backgroundColor: color2 }" class="btn1">Estado</button>
           </div>
           <div class="cont_btn2">
-            <button :style="{ backgroundColor: color2 }" class="btn2" @click="listarBoletas()">Listar tus boletas</button>
+            <button :style="{ backgroundColor: color2 }" class="btn2" @click="listarBoletas()">Listar tus
+              boletas</button>
           </div>
           <div class="cont_btn3">
-            <button :style="{ backgroundColor: color2 }" class="btn3" @click="personalizarColores()">Personalizar talonario</button>
+            <button :style="{ backgroundColor: color2 }" class="btn3" @click="personalizarColores()">Personalizar
+              talonario</button>
           </div>
           <div class="cont_btn4">
             <button :style="{ backgroundColor: color2 }" class="btn4" @click="imprimir()">Generar PDF</button>
@@ -292,12 +295,24 @@ const Alerta = () => {
   }
 };
 
+// Obtener la fecha actual
+var fechaActual = new Date();
+fechaActual.setHours(0, 0, 0, 0); // Establecer la hora a medianoche para comparación
+
+// Obtener la fecha de mañana
+var fechaManana = new Date();
+fechaManana.setDate(fechaManana.getDate() + 1);
+fechaManana.setHours(0, 0, 0, 0); // Establecer la hora a medianoche para comparación
+
+// Convertir la entrada a formato de fecha
+var fechaIngresada = new Date(fecha);
+
 const crearTalonario = () => {
   if (premio.value === '' || Precio.value === '' || selectedLoteria.value === '' || selectedCantidad.value === '' || fecha.value === '') {
     alerta.value = 'Todos los campos son obligatorios';
     ocultarAlerta();
     return;
-  } else if (new Date(fecha.value) <= new Date()) {
+  } else if (fechaIngresada >= fechaActual || fechaIngresada.getTime() === fechaManana.getTime()) {
     alerta.value = 'La fecha debe ser mayor a la actual';
     ocultarAlerta();
     return;
@@ -365,6 +380,7 @@ const registrar = () => {
       telefono: telefono.value,
       direccion: direccion.value,
       pago: estadoBoleta.value,
+      pago2: precio_Verificado.value
     });
     boleta.value[boletaSeleccionada.value].estado = estado.value;
     nombre.value = '';
@@ -468,6 +484,24 @@ const personalizarColores = () => {
 
 const imprimir = () => {
   const doc = new jsPDF();
+  const usuariosPagados = boletasCompradas.value.filter(
+    (boleta) => boleta.pago === "Pagada"
+  );
+  console.log(usuariosPagados);
+  const totalDineroRecolectado = usuariosPagados.reduce(
+    (total, boleta) => total + Number(boleta.pago2),
+    0
+  );
+  console.log(totalDineroRecolectado);
+  const usuariosNoPagados = boletasCompradas.value.filter(
+    (boleta) => boleta.pago === "No pagada"
+  );
+  console.log(usuariosNoPagados);
+  const totalDineroReservado = usuariosNoPagados.reduce(
+    (total, boleta) => total + Number(boleta.pago2),
+    0
+  );
+  console.log(totalDineroReservado);
 
   doc.setFontSize(12);
   doc.text("Resumen de boletas vendidas", 10, 10);
@@ -489,6 +523,12 @@ const imprimir = () => {
   const totalBoletas = boletasCompradas.value.length;
   doc.text(`Total de balotas compradas: ${totalBoletas}`, 10, doc.autoTable.previous.finalY + 10);
 
+  const totalPagadas = boletasCompradas.value.filter((boleta) => boleta.pago === "Pagada").length;
+   
+
+  const totalNoPagadas = boletasCompradas.value.filter((boleta) => boleta.pago === "No pagada").length;
+  doc.text(`Total dinero recolectado: ${totalDineroRecolectado.toLocaleString('es-CO')}`, 10, 60);
+  doc.text(`Total dinero por pagar: ${totalDineroReservado.toLocaleString('es-CO')}`, 10, 70);
   doc.save("vendidas.pdf");
 };
 </script>
@@ -499,7 +539,7 @@ const imprimir = () => {
   grid-template-rows: 10vh, 80vh, 10vh;
 }
 
-.cont_titulo{
+.cont_titulo {
   background-color: #cccccc;
 }
 
@@ -971,7 +1011,9 @@ input[type="text"] {
   height: 42vh;
 }
 
-.cont_input_color1, .cont_input_color2, .cont_input_color3{
+.cont_input_color1,
+.cont_input_color2,
+.cont_input_color3 {
   width: 100%;
   display: flex;
   flex-direction: column;
@@ -985,7 +1027,9 @@ input[type="text"] {
   margin-bottom: 5px;
 }
 
-.cont_input_color1 input, .cont_input_color2 input, .cont_input_color3 input {
+.cont_input_color1 input,
+.cont_input_color2 input,
+.cont_input_color3 input {
   width: 90%;
   border: none;
   border-radius: 10px;
