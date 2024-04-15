@@ -15,10 +15,10 @@
             <p class="text_titulo_form">Configurar talonario</p>
           </div>
           <div class="cont_text_premio">
-            <input type="text" placeholder="Premio" v-model="premio">
+            <input type="number" placeholder="Premio" v-model="premio">
           </div>
           <div class="cont_text_precio">
-            <input type="text" placeholder="Valor boleta" v-model="Precio">
+            <input type="number" placeholder="Valor boleta" v-model="Precio">
           </div>
           <div class="cont_tipos_loterias">
             <p class="text_tipos_loterias">Tipo de loteria</p>
@@ -46,6 +46,9 @@
           <div class="cont_btn">
             <button class="btn" :style="{ backgroundColor: color2 }" @click="crearTalonario()">Crear talonario</button>
           </div>
+          <div class="cont_btn BTN">
+            <button class="btn" :style="{ backgroundColor: color2 }" @click="atras6()" v-if="boton_atras">Atras</button>
+          </div>
         </div>
       </div>
     </div>
@@ -53,8 +56,8 @@
       <div class="cont_form_registro" :style="{ backgroundColor: color3 }">
         <p class="nam_div_registro">Registro de boletas</p>
         <div class="cont_identificacion">
-          <p class="text_identificacion">Numero de boleta: {{ boleta[boletaSeleccionada] ?
-    boleta[boletaSeleccionada].item : '' }}</p>
+          <p class="text_identificacion">Numero de boleta: {{ (boleta[boletaSeleccionada] ?
+            boleta[boletaSeleccionada].item : '') - 1 }}</p>
         </div>
         <div class="cont_nombre">
           <input type="text" placeholder="Nombre" v-model="nombre">
@@ -91,7 +94,7 @@
               <img src="../img/trofeo.png" class="img_trofeo">
             </div>
             <div class="cont_text_t">
-              <p class="text_trofeo">{{ premio_Verificado }}</p>
+              <p class="text_trofeo">{{ premio_Verificado.toLocaleString('es-CO') }}</p>
             </div>
           </div>
           <div class="cont_precio">
@@ -99,7 +102,7 @@
               <img src="../img/dolar.png" class="img_dolar">
             </div>
             <div class="cont_text_p">
-              <p class="text_precio">{{ Precio_Verificado }}</p>
+              <p class="text_precio">{{ Precio_Verificado.toLocaleString('es-CO') }}</p>
             </div>
           </div>
           <div class="cont_loteria">
@@ -165,7 +168,7 @@
             <th>Estado de pago</th>
           </tr>
           <tr class="balotas_compradas" v-for="(boletasCompradas, i) in boletasCompradas" :key="i">
-            <td>{{ boletasCompradas.numero }}</td>
+            <td>{{ boletasCompradas.numero - 1 }}</td>
             <td>{{ boletasCompradas.nombre }}</td>
             <td>{{ boletasCompradas.telefono }}</td>
             <td>{{ boletasCompradas.direccion }}</td>
@@ -208,6 +211,9 @@
         <div class="info_pago">
           <p class="text_info_pago">Estado</p>
           <p class="text_pago">{{ dueño.pago }}</p>
+        </div>
+        <div class="cont_btn_atras BTN2">
+          <button :style="{ backgroundColor: color2 }" @click="editarDueño()">Editar datos</button>
         </div>
         <div class="cont_btn_atras">
           <button :style="{ backgroundColor: color2 }" @click="atras3()">Regresar</button>
@@ -274,6 +280,7 @@ let color1 = ref("#ffffff")
 let color2 = ref("#ffffff")
 let color3 = ref("#cccccc")
 const contPersonalizar = ref(false)
+const boton_atras = ref(false)
 
 const boleta = ref([]);
 const boletasCompradas = ref([]);
@@ -299,11 +306,12 @@ const fechaActual = new Date();
 fechaActual.setHours(0, 0, 0, 0);
 
 const crearTalonario = () => {
+  boleta.value = [];
   if (premio.value === '' || Precio.value === '' || selectedLoteria.value === '' || selectedCantidad.value === '' || fecha.value === '') {
     alerta.value = 'Todos los campos son obligatorios';
     ocultarAlerta();
     return;
-  } else if (new Date(fecha.value) < fechaActual){
+  } else if (new Date(fecha.value) < fechaActual) {
     alerta.value = 'La fecha debe ser mayor a la actual';
     ocultarAlerta();
     return;
@@ -364,24 +372,46 @@ const registrar = () => {
       estado.value = 2;
       estadoBoleta.value = "No pagada";
     }
-    boletasCompradas.value.push({
-      id: id.value++,
-      numero: boleta.value[boletaSeleccionada.value].item,
-      nombre: nombre.value,
-      telefono: telefono.value,
-      direccion: direccion.value,
-      pago: estadoBoleta.value,
-      pago2: Precio_Verificado.value
-    });
-    boleta.value[boletaSeleccionada.value].estado = estado.value;
-    nombre.value = '';
-    telefono.value = '';
-    direccion.value = '';
-    pago.value = '';
-    selectedBoleta.value = '';
-    estado.value = 0;
-    RegistrarDueño.value = false;
-    cuerpo.value = true;
+    if (boletasCompradas.value.some(boletaComprada => boletaComprada.numero === boleta.value[boletaSeleccionada.value].item)) {
+      const index = boletasCompradas.value.findIndex(boletaComprada => boletaComprada.numero === boleta.value[boletaSeleccionada.value].item);
+      boletasCompradas.value[index] = {
+        ...boletasCompradas.value[index],
+        nombre: nombre.value,
+        telefono: telefono.value,
+        direccion: direccion.value,
+        pago: estadoBoleta.value,
+        pago2: Precio_Verificado.value
+      };
+      boleta.value[boletaSeleccionada.value].estado = estado.value;
+      nombre.value = '';
+      telefono.value = '';
+      direccion.value = '';
+      pago.value = '';
+      selectedBoleta.value = '';
+      estado.value = 0;
+      RegistrarDueño.value = false;
+      cuerpo.value = true;
+    }
+    else {
+      boletasCompradas.value.push({
+        id: id.value++,
+        numero: boleta.value[boletaSeleccionada.value].item,
+        nombre: nombre.value,
+        telefono: telefono.value,
+        direccion: direccion.value,
+        pago: estadoBoleta.value,
+        pago2: Precio_Verificado.value
+      });
+      boleta.value[boletaSeleccionada.value].estado = estado.value;
+      nombre.value = '';
+      telefono.value = '';
+      direccion.value = '';
+      pago.value = '';
+      selectedBoleta.value = '';
+      estado.value = 0;
+      RegistrarDueño.value = false;
+      cuerpo.value = true;
+    }
   }
 };
 
@@ -441,6 +471,11 @@ const atras5 = () => {
   cuerpo.value = true;
 };
 
+const atras6 = () => {
+  RegistroTalonario.value = false;
+  cuerpo.value = true;
+};
+
 const getBoletaColor = (estado) => {
   switch (estado) {
     case 0:
@@ -453,14 +488,19 @@ const getBoletaColor = (estado) => {
 };
 
 const editarTalonario = () => {
-  premio.value = '';
-  Precio.value = '';
-  selectedLoteria.value = '';
-  selectedCantidad.value = '';
-  fecha.value = '';
+  boton_atras.value = true;
   RegistroTalonario.value = true;
   cuerpo.value = false;
-  boleta.value = [];
+};
+
+const editarDueño = () => {
+  RegistrarDueño.value = true;
+  cont_datos_dueño.value = false;
+  cuerpo.value = false;
+  nombre.value = dueño.value.nombre;
+  telefono.value = dueño.value.telefono;
+  direccion.value = dueño.value.direccion;
+  selectedBoleta.value = dueño.value.pago === "Pagada" ? "Si" : "No";
 };
 
 const listarBoletas = () => {
@@ -495,7 +535,7 @@ const imprimir = () => {
 
   const totalBoletas = boletasCompradas.value.length;
   doc.text(`Total de balotas compradas: ${totalBoletas}`, 10, doc.autoTable.previous.finalY + 10);
-  
+
   const totalDineroRecolectado = boletasCompradas.value.reduce((acc, boleta) => {
     if (boleta.pago === "Pagada") {
       return acc + parseInt(Precio_Verificado.value);
@@ -503,7 +543,16 @@ const imprimir = () => {
     return acc;
   }, 0);
 
-  doc.text(`Total de dinero recolectado: $${totalDineroRecolectado}`, 10, doc.autoTable.previous.finalY + 20);
+  doc.text(`Total de dinero recolectado: $${totalDineroRecolectado.toLocaleString('es-CO')}`, 10, doc.autoTable.previous.finalY + 20);
+
+  const totalDineroNoRecolectado = boletasCompradas.value.reduce((acc, boleta) => {
+    if (boleta.pago === "No pagada") {
+      return acc + parseInt(Precio_Verificado.value);
+    }
+    return acc;
+  }, 0);
+
+  doc.text(`Total de dinero no recolectado: $${totalDineroNoRecolectado.toLocaleString('es-CO')}`, 10, doc.autoTable.previous.finalY + 30);
 
   doc.save("boletas.pdf");
 };
@@ -609,7 +658,7 @@ const imprimir = () => {
   margin-bottom: 10px;
 }
 
-input[type="text"],
+input[type="number"],
 select,
 input[type="date"] {
   width: 100%;
@@ -1011,6 +1060,14 @@ input[type="text"] {
   border-radius: 10px;
   height: 6vh;
   background: none;
+}
+
+.BTN {
+  margin-top: 10px;
+}
+
+.BTN2 {
+  margin-bottom: 10px;
 }
 
 @media (max-width: 1200px) {
